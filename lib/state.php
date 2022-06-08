@@ -34,7 +34,7 @@ function save_state( $user_id, $state ) {
 		}
 	}
 	else {
-		file_put_contents( $state_file, json_encode( $state ) );
+		file_put_contents( $state_file, serialize( $state ) );
 	}
 }
 
@@ -54,6 +54,12 @@ function get_state( $user_id ) {
 	if ( ! file_exists( $state_file ) ) {
 		return new stdClass();
 	}
-
-	return (object) json_decode( file_get_contents( $state_file ) );
+	
+	$state = unserialize( file_get_contents( $state_file ) );
+	
+	if ( ! $state ) {
+		$state = new stdClass();
+	}
+	
+	return $state;
 }
