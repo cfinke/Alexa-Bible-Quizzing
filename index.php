@@ -89,6 +89,22 @@ function handleIntent( &$request, &$response, $intent ) {
 			save_state( $user_id, $state );
 			$response->shouldEndSession = false;
 		break;
+		case 'VerseResponse':
+			$response->addOutput( "Verse Response: " . $request->getSlot( 'Verse' ) );
+			$response->shouldEndSession = false;
+		break;
+		case 'ChapterResponse':
+			$response->addOutput( "Chapter Response: " . $request->getSlot( 'Chapter' ) );
+			$response->shouldEndSession = false;
+		break;
+		case 'ChapterAndVerseResponse':
+			$response->addOutput( "Chapter and Verse Response: " . $request->getSlot( 'Chapter' ) . " verse " . $request->getSlot( 'Verse' ) );
+			$response->shouldEndSession = false;
+		break;
+		case 'FillInTheBlankResponse':
+			$response->addOutput( "You filled in the blank: " . $request->getSlot( "Answer" ) );
+			$response->shouldEndSession = false;
+		break;
 		case 'Quizzing':
 		case 'AMAZON.FallbackIntent':
 		case 'AMAZON.HelpIntent':
@@ -101,7 +117,6 @@ function handleIntent( &$request, &$response, $intent ) {
 			save_state( $user_id, $state );
 			
 			$response->shouldEndSession = false;
-			
 			
 			// Options:
 			// Name this verse.
@@ -125,6 +140,7 @@ function handleIntent( &$request, &$response, $intent ) {
 		break;
 		case 'AMAZON.NoIntent':
 			$response->addOutput( "You said no." );
+			$response->shouldEndSession = true;
 		break;
 		default:
 			$response->addOutput( "I don't know which intent this is: " . $intent );
@@ -149,10 +165,10 @@ function quiz_me( $response, &$state, $mode, $book, $chapter = null ) {
 		switch( $mode ) {
 			case "inwhich":
 				if ( $chapter ) {
-					$output = "Which verse is this in chapter " . $chapter ."? ";
+					$output = "Which verse is this in chapter " . $chapter ."?\n\n";
 				}
 				else {
-					$output = "Which chapter and verse is this? ";
+					$output = "Which chapter and verse is this?\n\n";
 					$chapter = rand( 1, count( $book->chapters ) );
 				}
 				
