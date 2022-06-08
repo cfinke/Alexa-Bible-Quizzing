@@ -17,11 +17,11 @@ try {
 	$response->shouldEndSession = true;
 
 	if ( 'LaunchRequest' === $request->data['request']['type'] ) {
-		// Just opening the skill ("Open Activity Book") responds with an activity.
-		handleIntent( $request, $response, 'Quizzing' );
+		// Just opening the skill ("Open Bible Quizzing").
+		$response = handleIntent( $request, $response, 'Quizzing' );
 	}
 	else {
-		handleIntent( $request, $response, $request->intentName );
+		$response = handleIntent( $request, $response );
 	}
 
 	$json = json_encode( $response->render() );
@@ -46,7 +46,7 @@ try {
  * @param object $response The Response.
  * @param string $intent The intent to handle, regardless of $request->intentName
  */
-function handleIntent( &$request, &$response, $intent ) {
+function handleIntent( $request, $response, $intent = null ) {
 	$user_id = $request->data['session']['user']['userId'];
 	$state = get_state( $user_id );
 
@@ -57,6 +57,10 @@ function handleIntent( &$request, &$response, $intent ) {
 				return;
 			break;
 		}
+	}
+
+	if ( ! $intent ) {
+		$intent = $request->intentName;
 	}
 
 	switch ( $intent ) {
@@ -188,8 +192,6 @@ function handleIntent( &$request, &$response, $intent ) {
 
 			$state->last_response = $response;
 			save_state( $user_id, $state );
-
-			$response->shouldEndSession = true;
 		break;
 		default:
 			$response->addOutput( "I don't know which intent this is: " . $intent );
@@ -199,6 +201,8 @@ function handleIntent( &$request, &$response, $intent ) {
 			save_state( $user_id, $state );
 		break;
 	}
+
+	return $response;
 }
 
 $output = ob_get_clean();
