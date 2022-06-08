@@ -1,3 +1,0 @@
-[submodule "lib/amazon-alexa-php"]
-	path = lib/amazon-alexa-php
-	url = git@github.com:cfinke/amazon-alexa-php.git
