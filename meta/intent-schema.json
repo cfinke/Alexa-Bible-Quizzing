@@ -1,0 +1,522 @@
+{
+    "interactionModel": {
+        "languageModel": {
+            "invocationName": "bible quizzing",
+            "intents": [
+                {
+                    "name": "AMAZON.CancelIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.HelpIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.StopIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NavigateHomeIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.FallbackIntent",
+                    "samples": []
+                },
+                {
+                    "name": "ChooseBook",
+                    "slots": [
+                        {
+                            "name": "Book",
+                            "type": "BibleBooks"
+                        }
+                    ],
+                    "samples": [
+                        "I want to memorize {Book}",
+                        "Open {Book} ",
+                        "Quiz me on {Book}",
+                        "I want to learn {Book}",
+                        "Let's learn {Book}",
+                        "Test me on {Book}",
+                        "Quiz me on the book of {Book}"
+                    ]
+                },
+                {
+                    "name": "ChooseBookAndChapter",
+                    "slots": [
+                        {
+                            "name": "Book",
+                            "type": "BibleBooks"
+                        },
+                        {
+                            "name": "Chapter",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "I want to learn {Book} chapter {Chapter}",
+                        "Test me on chapter {Chapter} of {Book}",
+                        "Test me on {Book} chapter {Chapter}",
+                        "chapter {Chapter} of {Book}",
+                        "{Book} chapter {Chapter} ",
+                        "Let's learn chapter {Chapter} or {Book}",
+                        "Quiz me on chapter {Chapter} of {Book}",
+                        "Quiz me on {Book} chapter {Chapter}",
+                        "I want to learn chapter {Chapter} of {Book}",
+                        "Open {Book} chapter {Chapter}",
+                        "I want to memorize {Book} chapter {Chapter}"
+                    ]
+                },
+                {
+                    "name": "SingleNumberResponse",
+                    "slots": [
+                        {
+                            "name": "Number",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "Chapter {Number}",
+                        "Verse {Number}",
+                        "{Number}"
+                    ]
+                },
+                {
+                    "name": "ChapterAndVerseResponse",
+                    "slots": [
+                        {
+                            "name": "Chapter",
+                            "type": "AMAZON.NUMBER"
+                        },
+                        {
+                            "name": "Verse",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "Chapter {Chapter} {Verse}",
+                        "{Chapter} {Verse}",
+                        "{Chapter} verse {Verse}",
+                        "Chapter {Chapter} Verse {Verse}"
+                    ]
+                },
+                {
+                    "name": "AMAZON.YesIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.RepeatIntent",
+                    "samples": []
+                },
+                {
+                    "name": "AMAZON.NoIntent",
+                    "samples": []
+                },
+                {
+                    "name": "ReadToMe",
+                    "slots": [
+                        {
+                            "name": "Book",
+                            "type": "BibleBooks"
+                        },
+                        {
+                            "name": "Chapter",
+                            "type": "AMAZON.NUMBER"
+                        }
+                    ],
+                    "samples": [
+                        "read chapter {Chapter} of {Book}",
+                        "read chapter {Chapter}",
+                        "read {Book}",
+                        "read {Book} {Chapter} to me",
+                        "read chapter {Chapter} of {Book} to me",
+                        "read {Book} to me",
+                        "read me {Book}",
+                        "read me chapter {Chapter}",
+                        "read me the book of {Book}",
+                        "read me chapter {Chapter} of {Book}",
+                        "read me {Book} chapter {Chapter}",
+                        "read it for me",
+                        "read for me",
+                        "read it to me",
+                        "read to me"
+                    ]
+                },
+                {
+                    "name": "InWhich",
+                    "slots": [],
+                    "samples": [
+                        "which chapter and verse is this",
+                        "which chapter and verse",
+                        "Which verse",
+                        "Which verse is this",
+                        "In which chapter and verse",
+                        "In which",
+                        "In which verse"
+                    ]
+                },
+                {
+                    "name": "Stats",
+                    "slots": [],
+                    "samples": [
+                        "what is my score",
+                        "tell me my score",
+                        "how many questions have i gotten wrong",
+                        "how many questions have i gotten right",
+                        "how many questions have i answered",
+                        "how many have i gotten wrong",
+                        "how many have i gotten right",
+                        "tell me my stats",
+                        "stats",
+                        "what are my stats"
+                    ]
+                },
+                {
+                    "name": "ResetStats",
+                    "slots": [],
+                    "samples": [
+                        "set my stats to zero",
+                        "reset my stats"
+                    ]
+                }
+            ],
+            "types": [
+                {
+                    "name": "BibleBooks",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "Genesis"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Exodus"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Leviticus"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Numbers"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Deuteronomy"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Joshua"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Judges"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Ruth"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Samuel"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Samuel"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Kings"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Kings"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Chronicles"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Chronicles"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Ezra"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Nehemiah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Esther"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Job"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Psalm"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Proverbs"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Ecclesiastes"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Song of Solomon"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Isaiah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Jeremiah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Lamentations"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Ezekiel"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Daniel"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Hosea"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Joel"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Amos"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Obadiah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Jonah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Micah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Nahum"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Habakkuk"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Zephaniah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Haggai"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Zechariah"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Malachi"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Matthew"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Mark"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Luke"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "John"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Acts"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Romans"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Corinthians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Corinthians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Galatians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Ephesians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Philippians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Colossians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Thessalonians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Thessalonians"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Timothy"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Timothy"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Titus"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Philemon"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Hebrews"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "James"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 Peter"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 Peter"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "1 John"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "2 John"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "3 John"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Jude"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "Revelation"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}

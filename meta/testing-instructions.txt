@@ -1,0 +1,11 @@
+You can see the flowchart of the different modes for the skill here: https://lucid.app/publicSegments/view/32763aab-0314-4f4e-b0d2-236cbc919c23/image.png
+
+Basically, after opening ("Open Bible Quizzing"), you can choose three modes: "In which verse", "Fill in the blank," and "Read to me."
+
+"In which verse" will recite a verse and ask for the reference (e.g., "Acts 3 verse 2"). It will respond with whether the user was correct and then continue with another verse. The user can exit at any time by telling Alexa to stop.
+
+"Fill in the blank" will recite a verse with a portion missing and then give four options for filling it in. It will respond with whether the user was correct and then continue with another verse. The user can exit at any time by telling Alexa to stop.
+
+"Read to me" will read a chapter of the requested book to the user and then ask if it should continue with the next chapter. The user can exit at any time by telling Alexa to stop.
+
+With the two skill-based modes, the skill will track the number of correct answers and supply the user with their stats upon ending the skill.
