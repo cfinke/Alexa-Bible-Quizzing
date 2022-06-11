@@ -42,7 +42,8 @@ try {
 			$state->chapter,
 			$state->book,
 			$state->intent_on_yes,
-			$state->vars_on_yes
+			$state->vars_on_yes,
+			$state->last_five_verses
 		);
 	}
 	else {
@@ -71,17 +72,18 @@ try {
 function handleIntent( $request, $response, $intent = null ) {
 	global $state;
 
+	if ( ! $intent ) {
+		$intent = $request->intentName;
+	}
+
 	if ( ! $request->session->new ) {
 		switch ( $intent ) {
 			case 'AMAZON.StopIntent':
 			case 'AMAZON.CancelIntent':
-				return;
+				$response = stats( $response );
+				return $response;
 			break;
 		}
-	}
-
-	if ( ! $intent ) {
-		$intent = $request->intentName;
 	}
 
 	switch ( $intent ) {
@@ -94,12 +96,24 @@ function handleIntent( $request, $response, $intent = null ) {
 			$response->addCardTitle( "Using Bible Quizzing" );
 			$response->addCardOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
 		break;
+		case 'Stats':
+			$response = stats( $response, true );
+		break;
+		case 'ResetStats':
+			$state->right = 0;
+			$state->wrong = 0;
+
+			$response->addOutput( "Ok, I've reset your stats." );
+		break;
 		case 'ChooseBook':
 			$response->shouldEndSession = false;
 
 			// slots: Book
 			$book = $request->getSlot( 'Book' );
 			$state->book = $book;
+
+			unset( $state->chapter );
+			unset( $state->last_five_verses );
 
 			$response->addOutput( "How do you want to learn? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
 
@@ -146,6 +160,71 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			$response = read_to_me( $response );
 		break;
+		case 'InWhich':
+			$response->shouldEndSession = false;
+
+			$response = in_which( $response );
+
+			$state->intent_on_continue = 'InWhich';
+		break;
+		case 'SingleNumberResponse':
+			$response->shouldEndSession = false;
+
+			// slots: Number
+			if ( isset( $state->expected_response ) ) {
+				switch ( $state->expected_response ) {
+					case 'verse':
+						if ( $state->verse == $request->getSlot( 'Number' ) ) {
+							$response->addOutput( "That's right!" );
+							right();
+						}
+						else {
+							$response->addOutput( "Sorry, the answer was verse " . $state->verse . ", not " . $request->getSlot( 'Number' ) );
+							wrong();
+						}
+
+						unset( $state->chapter );
+
+						return handleIntent( $request, $response, $state->intent_on_continue );
+					break;
+					case 'chapter_and_verse':
+						$response->addOutput( "I need the chapter AND verse." );
+					break;
+				}
+			}
+			else {
+				$response->addOutput( "I'm sorry, I don't know what you're telling me." );
+			}
+		break;
+		case 'ChapterAndVerseResponse':
+			$response->shouldEndSession = false;
+
+			// slots: Chapter, Verse
+			if ( isset( $state->expected_response ) ) {
+				switch ( $state->expected_response ) {
+					case 'chapter_and_verse':
+					case 'verse':
+						if ( $state->verse == $request->getSlot( 'Verse' ) && $state->chapter == $request->getSlot( 'Chapter' ) ) {
+							$response->addOutput( "That's right!" );
+							right();
+						}
+						else {
+							$response->addOutput( "Sorry, the answer was chapter " . $state->chapter . ", verse " . $state->verse . "." );
+							wrong();
+						}
+
+						if ( 'chapter_and_verse' === $state->expected_respone ) {
+							unset( $state->chapter );
+						}
+
+						return handleIntent( $request, $response, $state->intent_on_continue );
+						break;
+				}
+			}
+			else {
+				$response->addOutput( "I'm sorry, I don't know what you're telling me." );
+			}
+		break;
 		case 'AMAZON.YesIntent':
 			if ( isset( $state->intent_on_yes ) ) {
 				if ( isset( $state->vars_on_yes ) ) {
@@ -172,122 +251,6 @@ function handleIntent( $request, $response, $intent = null ) {
 				$response->addOutput( "I don't know what you're saying no to." );
 			}
 		break;
-
-		/*
-		case 'FillInTheBlank':
-			$response->shouldEndSession = false;
-		break;
-		case 'InWhich':
-			$response->shouldEndSession = false;
-		break;
-		*/
-	}
-
-	/*
-	switch ( $intent ) {
-		case 'QuizMe':
-			$book = $request->getSlot( 'Book' );
-
-			if ( ! $book ) {
-				$book = $state->book;
-			}
-
-			if ( ! $book ) {
-				$response->addOutput( "Which book would you like to learn?" );
-			}
-			else {
-				$chapter = $request->getSlot( 'Chapter' );
-
-				$response = quiz_me( $response, "inwhich", $book, $chapter );
-
-				$state->last_entry_request = $request;
-				$state->last_response = $response;
-			}
-
-			$response->shouldEndSession = false;
-		break;
-		case 'QuizMeChapter':
-			$book = $state->book;
-
-			$chapter = $request->getSlot( 'Chapter' );
-
-			$response = quiz_me( $response, "inwhich", $book, $chapter );
-
-			$state->last_entry_request = $request;
-			$state->last_response = $response;
-
-			$response->shouldEndSession = false;
-		break;
-		case 'SingleNumberResponse':
-			$response->addOutput( "Response: " . $request->getSlot( 'Number' ) );
-
-			if ( $state->expected_response === 'verse' ) {
-				if ( $state->verse === $request->getSlot( 'Number' ) ) {
-					$response->addOutput( "That's right!" );
-				}
-				else {
-					$response->addOutput( "Sorry, the answer was verse " . $state->verse );
-				}
-
-				$response->addOutput( "Do you want to keep going?" );
-			}
-			else {
-				$response->addOutput( "I need a chapter AND a verse." );
-			}
-
-			$state->last_response = $response;
-
-			$response->shouldEndSession = false;
-		break;
-		case 'ChapterAndVerseResponse':
-			$chapter = $request->getSlot( 'Chapter' );
-			$verse = $request->getSlot( 'Verse' );
-
-			$response->addOutput( "Chapter and Verse Response: " . $request->getSlot( 'Chapter' ) . " verse " . $request->getSlot( 'Verse' ) . "" );
-
-			if ( $state->chapter == $chapter && $state->verse == $verse ) {
-				$response->addOutput( "That's right!" );
-			}
-			else {
-				$response->addOutput( "Sorry, the answer was chapter " . $state->chapter . " verse " . $state->verse . "." );
-			}
-
-			$response->addOutput( "Do you want to keep going?" );
-
-			$state->last_response = $response;
-
-			$response->shouldEndSession = false;
-		break;
-		case 'FillInTheBlankResponse':
-			$response->addOutput( "You filled in the blank: " . $request->getSlot( "Answer" ) );
-
-			$state->last_response = $response;
-
-			$response->shouldEndSession = false;
-		break;
-		case 'AMAZON.FallbackIntent':
-			$response->addOutput( "I'm sorry, I couldn't understand that. Can you repeat it?" );
-			$response->shouldEndSession = false;
-		break;
-		case 'Quizzing':
-		case 'AMAZON.HelpIntent':
-			$response->addOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
-
-			$response->addCardTitle( "Using Bible Quizzing" );
-			$response->addCardOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
-
-			$state->last_response = $response;
-
-			$response->shouldEndSession = false;
-
-			// Options:
-			// Name this verse.
-			// Finish this verse.
-			// Recite this verse.
-			// Read to me.
-			// Fill in the blank.
-
-		break;
 		case 'AMAZON.RepeatIntent':
 			if ( ! $state || ! $state->last_response ) {
 				$response->addOutput( "I'm sorry, I don't know what to repeat." );
@@ -296,14 +259,16 @@ function handleIntent( $request, $response, $intent = null ) {
 				$response->output = $state->last_response->output;
 			}
 		break;
-		default:
-			$response->addOutput( "I don't know which intent this is: " . $intent );
-			error_log( "Couldn't handle " . $intent );
+		case 'AMAZON.FallbackIntent':
+			$response->addOutput( "I'm sorry, I couldn't understand that. Can you repeat it?" );
+			$response->shouldEndSession = false;
+		break;
 
-			$state->last_response = $response;
+		default:
+			$response->addOutput( "I don't know what you're asking me to do." );
+			error_log( "Couldn't handle intent: " . $intent );
 		break;
 	}
-	*/
 
 	return $response;
 }
@@ -314,48 +279,6 @@ header( 'Content-Type: application/json' );
 echo $output;
 
 exit;
-
-function quiz_me( $response, $mode, $book, $chapter = null ) {
-	global $state;
-
-	$book = strtolower( $book );
-
-	if ( file_exists( "data/" . $book . ".json" ) ) {
-		$book = json_decode( file_get_contents( "data/" . $book . ".json" ) );
-
-		switch( $mode ) {
-			case "inwhich":
-				if ( $chapter ) {
-					$state->expected_response = "verse";
-				}
-				else {
-					$state->expected_response = "chapter_and_verse";
-				}
-
-				if ( $chapter ) {
-					$output = "Which verse is this in chapter " . $chapter ."? ";
-				}
-				else {
-					$output = "Which chapter and verse is this? ";
-					$chapter = rand( 1, count( $book->chapters ) );
-				}
-
-				$verse = rand( 1, count( $book->chapters[ $chapter - 1 ] ) );
-				$output .= $book->chapters[ $chapter - 1 ][ $verse - 1 ];
-
-				$response->addOutput( $output );
-				$response->withCard( $output );
-
-				$state->mode = $mode;
-				$state->book = $book;
-				$state->chapter = $chapter;
-				$state->verse = $verse;
-			break;
-		}
-	}
-
-	return $response;
-}
 
 /**
  * Output a chapter of the currently selected book.
@@ -395,6 +318,102 @@ function read_to_me( $response ) {
 		$response->shouldEndSession = true;
 	}
 
+
+	return $response;
+}
+
+/**
+ * Quiz the listener about the reference for a verse.
+ *
+ * @param Response $response
+ * @return Response
+ */
+function in_which( $response ) {
+	global $state;
+
+	$book = json_decode( file_get_contents( "data/" . $state->book . ".json" ) );
+
+	// Ensure that we don't ask the same verse twice within five responses.
+	if ( ! isset( $state->last_five_verses ) ) {
+		$state->last_five_verses = array();
+	}
+
+	do {
+		if ( isset( $state->chapter ) ) {
+			$chosen_chapter = $state->chapter;
+			$state->expected_response = 'verse';
+		}
+		else {
+			$chosen_chapter = rand( 1, count( $book->chapters ) );
+			$state->expected_response = 'chapter_and_verse';
+		}
+
+		$chapter = $book->chapters[ $chosen_chapter - 1 ];
+
+		$chosen_verse = rand( 1, count( $chapter ) );
+	} while ( in_array( $chosen_chapter . ":" . $chosen_verse, $state->last_five_verses ) );
+
+	array_unshift( $state->last_five_verses, $chosen_chapter . ":" . $chosen_verse );
+	$state->last_five_verses = array_slice( $state->last_five_verses, 0, 5 );
+
+	if ( isset( $state->chapter ) ) {
+		$response->addOutput( "Which verse is this in chapter " . $state->chapter . "?" );
+	}
+	else {
+		$response->addOutput( "Which chapter and verse is this?" );
+	}
+
+	$state->chapter = $chosen_chapter;
+	$state->verse = $chosen_verse;
+
+	$response->addOutput( $chapter[ $state->verse - 1 ] );
+
+	return $response;
+}
+
+function right() {
+	global $state;
+
+	if ( isset( $state->right ) ) {
+		$state->right++;
+	}
+	else {
+		$state->right = 1;
+	}
+}
+
+function wrong() {
+	global $state;
+
+	if ( isset( $state->wrong ) ) {
+		$state->wrong++;
+	}
+	else {
+		$state->wrong = 1;
+	}
+}
+
+function stats( $response, $force = false ) {
+	global $state;
+
+	$right = $state->right ?? 0;
+	$wrong = $state->wrong ?? 0;
+
+	$total = $right + $wrong;
+
+	if ( ! $total ) {
+		if ( $force ) {
+			$response->addOutput( "You haven't answered any questions yet." );
+		}
+	}
+	else {
+		if ( $total === 1 ) {
+			$response->addOutput( "You've correctly answered " . $right . " out of " . $total . " question so far." );
+		}
+		else {
+			$response->addOutput( "You've correctly answered " . $right . " out of " . $total . " questions so far." );
+		}
+	}
 
 	return $response;
 }
