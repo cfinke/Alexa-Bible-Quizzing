@@ -11,24 +11,49 @@ ob_start();
 try {
 	// Generate the right type of Request object
 	$request = \Alexa\Request\Request::fromHTTPRequest( APPLICATION_ID );
+
 	$response = new \Alexa\Response\Response;
 
 	// By default, always end the session unless there's a reason not to.
 	$response->shouldEndSession = true;
 
+	$user_id = $request->data['session']['user']['userId'];
+	$state = get_state( $user_id );
+
 	if ( 'LaunchRequest' === $request->data['request']['type'] ) {
 		// Just opening the skill ("Open Bible Quizzing").
-		$response = handleIntent( $request, $response, 'Quizzing' );
+		$response = handleIntent( $request, $response, 'Launch' );
 	}
 	else {
+		if ( strpos( $request->intentName, "AMAZON." ) !== 0 ) {
+			// Remove $state->intent_on_yes and $state->vars_on_yes on the first non-Yes/No request after they're set.
+			unset(
+				$state->intent_on_yes,
+				$state->vars_on_yes
+			);
+		}
+
 		$response = handleIntent( $request, $response );
 	}
+
+	if ( $response->shouldEndSession ) {
+		unset(
+			$state->last_response,
+			$state->chapter,
+			$state->book,
+			$state->intent_on_yes,
+			$state->vars_on_yes
+		);
+	}
+	else {
+		$state->last_response = $response;
+	}
+
+	save_state( $user_id, $state );
 
 	$json = json_encode( $response->render() );
 
 	echo $json;
-
-	error_log( "OUTPUT: " . $json );
 } catch ( Exception $e ) {
 	error_log( var_export( $e, true ) );
 
@@ -38,17 +63,13 @@ try {
 
 /**
  * Given an intent, handle all processing and response generation.
- * This is split up because one intent can lead into another; for example,
- * moderating a comment immediately launches the next step of the NewComments
- * intent.
  *
  * @param object $request The Request.
  * @param object $response The Response.
  * @param string $intent The intent to handle, regardless of $request->intentName
  */
 function handleIntent( $request, $response, $intent = null ) {
-	$user_id = $request->data['session']['user']['userId'];
-	$state = get_state( $user_id );
+	global $state;
 
 	if ( ! $request->session->new ) {
 		switch ( $intent ) {
@@ -64,6 +85,106 @@ function handleIntent( $request, $response, $intent = null ) {
 	}
 
 	switch ( $intent ) {
+		case 'Launch':
+		case 'AMAZON.HelpIntent':
+			$response->shouldEndSession = false;
+
+			$response->addOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
+
+			$response->addCardTitle( "Using Bible Quizzing" );
+			$response->addCardOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
+		break;
+		case 'ChooseBook':
+			$response->shouldEndSession = false;
+
+			// slots: Book
+			$book = $request->getSlot( 'Book' );
+			$state->book = $book;
+
+			$response->addOutput( "How do you want to learn? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
+
+			$response->addCardTitle( "Choose a Mode" );
+			$response->addCardOutput( "How do you want to learn? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
+		break;
+		case 'ChooseBookAndChapter':
+			$response->shouldEndSession = false;
+
+			// slots: Book, Chapter
+			// slots: Book
+			$book = $request->getSlot( 'Book' );
+			$state->book = $book;
+
+			$chapter = $request->getSlot( 'Chapter' );
+			$state->chapter = $chapter;
+
+			$response->addOutput( "How do you want to learn " . $book . " chapter " . $chapter . "? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
+
+			$response->addCardTitle( "Choose a Mode" );
+			$response->addCardOutput( "How do you want to learn? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
+		break;
+		case 'ReadToMe':
+			$response->shouldEndSession = false;
+
+			// slots: Book, Chapter
+			if ( $request->getSlot( 'Book' ) ) {
+				$state->book = $request->getSlot( 'Book' );
+
+				if ( ! $request->getSlot( 'Chapter' ) ) {
+					$state->chapter = 1;
+				}
+			}
+
+			if ( $request->getSlot( 'Chapter' ) ) {
+				$state->chapter = $request->getSlot( 'Chapter' );
+			}
+
+			if ( ! $state->book ) {
+				$books = glob( "data/*.json" );
+
+				$state->book = str_replace( ".json", "", $books[0] );
+			}
+
+			$response = read_to_me( $response );
+		break;
+		case 'AMAZON.YesIntent':
+			if ( isset( $state->intent_on_yes ) ) {
+				if ( isset( $state->vars_on_yes ) ) {
+					foreach ( $state->vars_on_yes as $name => $val ) {
+						$state->{ $name } = $val;
+					}
+				}
+
+				return handleIntent( $request, $response, $state->intent_on_yes );
+			}
+			else {
+				$response->addOutput( "I don't know what you're agreeing to." );
+			}
+		break;
+		case 'AMAZON.NoIntent':
+			if ( isset( $state->intent_on_yes ) ) {
+				switch ( $state->intent_on_yes ) {
+					case 'ReadToMe':
+						$response->addOutput( "Ok, good bye." );
+					break;
+				}
+			}
+			else {
+				$response->addOutput( "I don't know what you're saying no to." );
+			}
+		break;
+
+		/*
+		case 'FillInTheBlank':
+			$response->shouldEndSession = false;
+		break;
+		case 'InWhich':
+			$response->shouldEndSession = false;
+		break;
+		*/
+	}
+
+	/*
+	switch ( $intent ) {
 		case 'QuizMe':
 			$book = $request->getSlot( 'Book' );
 
@@ -77,11 +198,10 @@ function handleIntent( $request, $response, $intent = null ) {
 			else {
 				$chapter = $request->getSlot( 'Chapter' );
 
-				$response = quiz_me( $response, $state, "inwhich", $book, $chapter );
+				$response = quiz_me( $response, "inwhich", $book, $chapter );
 
 				$state->last_entry_request = $request;
 				$state->last_response = $response;
-				save_state( $user_id, $state );
 			}
 
 			$response->shouldEndSession = false;
@@ -91,11 +211,10 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			$chapter = $request->getSlot( 'Chapter' );
 
-			$response = quiz_me( $response, $state, "inwhich", $book, $chapter );
+			$response = quiz_me( $response, "inwhich", $book, $chapter );
 
 			$state->last_entry_request = $request;
 			$state->last_response = $response;
-			save_state( $user_id, $state );
 
 			$response->shouldEndSession = false;
 		break;
@@ -117,7 +236,6 @@ function handleIntent( $request, $response, $intent = null ) {
 			}
 
 			$state->last_response = $response;
-			save_state( $user_id, $state );
 
 			$response->shouldEndSession = false;
 		break;
@@ -137,7 +255,6 @@ function handleIntent( $request, $response, $intent = null ) {
 			$response->addOutput( "Do you want to keep going?" );
 
 			$state->last_response = $response;
-			save_state( $user_id, $state );
 
 			$response->shouldEndSession = false;
 		break;
@@ -145,7 +262,6 @@ function handleIntent( $request, $response, $intent = null ) {
 			$response->addOutput( "You filled in the blank: " . $request->getSlot( "Answer" ) );
 
 			$state->last_response = $response;
-			save_state( $user_id, $state );
 
 			$response->shouldEndSession = false;
 		break;
@@ -161,7 +277,6 @@ function handleIntent( $request, $response, $intent = null ) {
 			$response->addCardOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
 
 			$state->last_response = $response;
-			save_state( $user_id, $state );
 
 			$response->shouldEndSession = false;
 
@@ -178,29 +293,17 @@ function handleIntent( $request, $response, $intent = null ) {
 				$response->addOutput( "I'm sorry, I don't know what to repeat." );
 			}
 			else {
-				save_state( $user_id, $state );
 				$response->output = $state->last_response->output;
 			}
-		break;
-		case 'AMAZON.YesIntent':
-			$response->addOutput( "You said yes." );
-
-			return handleIntent( $state->last_entry_request, $response, $state->last_entry_request->intentName );
-		break;
-		case 'AMAZON.NoIntent':
-			$response->addOutput( "You said no." );
-
-			$state->last_response = $response;
-			save_state( $user_id, $state );
 		break;
 		default:
 			$response->addOutput( "I don't know which intent this is: " . $intent );
 			error_log( "Couldn't handle " . $intent );
 
 			$state->last_response = $response;
-			save_state( $user_id, $state );
 		break;
 	}
+	*/
 
 	return $response;
 }
@@ -212,7 +315,9 @@ echo $output;
 
 exit;
 
-function quiz_me( $response, &$state, $mode, $book, $chapter = null ) {
+function quiz_me( $response, $mode, $book, $chapter = null ) {
+	global $state;
+
 	$book = strtolower( $book );
 
 	if ( file_exists( "data/" . $book . ".json" ) ) {
@@ -248,6 +353,48 @@ function quiz_me( $response, &$state, $mode, $book, $chapter = null ) {
 			break;
 		}
 	}
+
+	return $response;
+}
+
+/**
+ * Output a chapter of the currently selected book.
+ *
+ * @param Response $response
+ * @return Response
+ */
+function read_to_me( $response ) {
+	global $state;
+
+	$book = json_decode( file_get_contents( "data/" . $state->book . ".json" ) );
+
+	if ( ! isset( $state->chapter ) ) {
+		$state->chapter = 1;
+	}
+
+	if ( $state->chapter > count( $book->chapters ) ) {
+		$response->addOutput( $book . " doesn't have a chapter " . $state->chapter . "." );
+	}
+
+	$chapter = $book->chapters[ $state->chapter - 1 ];
+
+	$response->addOutput( $book->book . ", chapter " . $state->chapter . ". " );
+
+	foreach ( $chapter as $verse_index => $verse ) {
+		$response->addOutput( "Verse " . ( $verse_index + 1 ) . ": " . $verse );
+	}
+
+	if ( $state->chapter != count( $book->chapters ) ) {
+		$response->addOutput( "Thus ends " . $book->book . " chapter " . $state->chapter . ". Shall I continue reading?" );
+
+		$state->intent_on_yes = 'ReadToMe';
+		$state->vars_on_yes = array( 'book' => $state->book, 'chapter' => $state->chapter + 1 );
+	}
+	else {
+		$response->addOutput( "Thus ends the book of " . $book->book . "." );
+		$response->shouldEndSession = true;
+	}
+
 
 	return $response;
 }

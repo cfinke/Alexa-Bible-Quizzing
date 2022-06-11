@@ -13,6 +13,8 @@ Example Phrases
 
 "Alexa, tell Bible Quizzing to quiz me on Acts Chapter 4."
 
+"Alexa, tell Bible Quizzing to read me Acts Chapter 7."
+
 Attribution
 ===========
 The project icon is from Smashicons at https://www.flaticon.com/premium-icon/book_3389391
