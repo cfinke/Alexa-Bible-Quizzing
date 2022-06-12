@@ -178,6 +178,29 @@
                         "set my stats to zero",
                         "reset my stats"
                     ]
+                },
+                {
+                    "name": "SingleLetterResponse",
+                    "slots": [
+                        {
+                            "name": "Letter",
+                            "type": "SingleLetter"
+                        }
+                    ],
+                    "samples": [
+                        "I choose {Letter}",
+                        "{Letter}",
+                        "The answer is {Letter}",
+                        "Choice {Letter}"
+                    ]
+                },
+                {
+                    "name": "FillInTheBlank",
+                    "slots": [],
+                    "samples": [
+                        "fill in blank",
+                        "fill in the blank"
+                    ]
                 }
             ],
             "types": [
@@ -512,6 +535,31 @@
                         {
                             "name": {
                                 "value": "Revelation"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "name": "SingleLetter",
+                    "values": [
+                        {
+                            "name": {
+                                "value": "D"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "C"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "B"
+                            }
+                        },
+                        {
+                            "name": {
+                                "value": "A"
                             }
                         }
                     ]
