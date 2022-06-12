@@ -167,6 +167,13 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			$state->intent_on_continue = 'InWhich';
 		break;
+		case 'FillInTheBlank':
+			$response->shouldEndSession = false;
+
+			$response = fill_in_the_blank( $response );
+
+			$state->intent_on_continue = 'FillInTheBlank';
+		break;
 		case 'SingleNumberResponse':
 			$response->shouldEndSession = false;
 
@@ -195,6 +202,25 @@ function handleIntent( $request, $response, $intent = null ) {
 			else {
 				$response->addOutput( "I'm sorry, I don't know what you're telling me." );
 			}
+		break;
+		case 'SingleLetterResponse':
+			$response->shouldEndSession = false;
+
+			$letter = strtoupper( substr( $request->getSlot( "Letter" ), 0, 1 ) ); // Alexa will send "B." instead of "B".
+
+			// slots: Letter
+			if ( strtoupper( $state->letter ) == $letter ) {
+				$response->addOutput( "That's right!" );
+				right();
+			}
+			else {
+				$response->addOutput( "Sorry, the answer was " . strtoupper( $state->letter ) . ", not " . $letter . "." );
+				wrong();
+			}
+
+			unset( $state->letter );
+
+			return handleIntent( $request, $response, $state->intent_on_continue );
 		break;
 		case 'ChapterAndVerseResponse':
 			$response->shouldEndSession = false;
@@ -369,6 +395,132 @@ function in_which( $response ) {
 	$response->addOutput( $chapter[ $state->verse - 1 ] );
 
 	return $response;
+}
+
+/**
+ * @param Response $response
+ * @return Response
+ */
+function fill_in_the_blank( $response ) {
+	global $state;
+
+	$book = json_decode( file_get_contents( "data/" . $state->book . ".json" ) );
+
+	// Ensure that we don't ask the same verse twice within five responses.
+	if ( ! isset( $state->last_five_verses ) ) {
+		$state->last_five_verses = array();
+	}
+
+	do {
+		if ( isset( $state->chapter ) ) {
+			$chosen_chapter = $state->chapter;
+			$state->expected_response = 'verse';
+		}
+		else {
+			$chosen_chapter = rand( 1, count( $book->chapters ) );
+			$state->expected_response = 'chapter_and_verse';
+		}
+
+		$chapter = $book->chapters[ $chosen_chapter - 1 ];
+
+		$chosen_verse = rand( 1, count( $chapter ) );
+	} while ( in_array( $chosen_chapter . ":" . $chosen_verse, $state->last_five_verses ) );
+
+	array_unshift( $state->last_five_verses, $chosen_chapter . ":" . $chosen_verse );
+	$state->last_five_verses = array_slice( $state->last_five_verses, 0, 5 );
+
+	$response->addOutput( "Fill in the blank in chapter " . $chosen_chapter . " verse " . $chosen_verse . ": " );
+
+	$verse_text = $chapter[ $chosen_verse - 1 ];
+	$verse_words = preg_split( "/\s/", $verse_text );
+
+	$number_of_words = rand( 1, 3 );
+
+	$location = rand( 0, count( $verse_words ) - 1 - $number_of_words );
+	$answer = array_slice( $verse_words, $location, $number_of_words );
+
+	for ( $i = 0; $i < $number_of_words; $i++ ) {
+		$verse_words[ $i + $location ] = " BLANK ";
+	}
+
+	if ( $location === 0 ) {
+		$prefix = "";
+	}
+	else {
+		$prefix = $verse_words[ $location - 1 ];
+	}
+
+	$actual_answer = join( " ", $answer );
+	$answer_options = fill_in_the_blank_options( $book, $prefix, $number_of_words, 3, $actual_answer );
+	$answer_options[] = $actual_answer;
+
+	$verse_with_blank = join( " ", $verse_words );
+
+	$response->addOutput( $verse_with_blank );
+	$state->letter = "A";
+
+	$response->addOutput( "Is it..." );
+
+	shuffle( $answer_options );
+
+	foreach ( array( "A", "B", "C", "D" ) as $choice_index => $choice ) {
+		$response->addOutput( $choice . ": " . $answer_options[ $choice_index ] );
+
+		if ( $actual_answer === $answer_options[ $choice_index ] ) {
+			$state->letter = $choice;
+		}
+	}
+
+	return $response;
+}
+
+function fill_in_the_blank_options( $book, $prefix, $number_of_words, $number_of_answers, $actual_answer ) {
+	$possible_answers = array();
+
+	foreach ( $book->chapters as $chapter ) {
+		foreach ( $chapter as $verse ) {
+			$verse_words = preg_split( "/\s/", $verse );
+
+			if ( $prefix === "" ) {
+				$possible_answer = join( " ", array_slice( $verse_words, 0, $number_of_words ) );
+
+				if ( $possible_answer != $actual_answer ) {
+					$possible_answers[] = $possible_answer;
+				}
+			}
+
+			foreach ( $verse_words as $idx => $word ) {
+				if ( $word === $prefix ) {
+					$possible_answer = join( " ", array_slice( $verse_words, $idx + 1, $number_of_words ) );
+
+					if ( $possible_answer != $actual_answer ) {
+						$possible_answers[] = $possible_answer;
+					}
+				}
+			}
+		}
+	}
+
+	$possible_answers = array_unique( $possible_answers );
+
+	while ( count( $possible_answers ) < $number_of_answers ) {
+		$random_chapter = $book->chapters[ rand( 0, count( $book->chapters ) - 1 ) ];
+		$random_verse = $random_chapter[ rand( 0, count( $random_chapter ) - 1 ) ];
+		$random_verse_words = preg_split( "/\s/", $random_verse );
+		$random_starting_point = max( 0, rand( 0, count( $random_verse_words ) - 1 - $number_of_words ) );
+
+		$random_possible_answer = join( " ", array_slice( $random_verse_words, $random_starting_point, $number_of_words ) );
+
+		if ( $random_possible_answer != $actual_answer ) {
+			$possible_answers[] = $possible_answer;
+		}
+
+		$possible_answers = array_unique( $possible_answers );
+	}
+
+	shuffle( $possible_answers );
+
+	return array_slice( $possible_answers, 0, $number_of_answers );
 }
 
 function right() {
