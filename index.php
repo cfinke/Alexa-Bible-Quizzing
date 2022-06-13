@@ -1,7 +1,5 @@
 <?php
 
-error_log( "Received a request." );
-
 require "./config.php";
 require "./lib/amazon-alexa-php/src/autoload.php";
 require "./lib/state.php";
