@@ -485,9 +485,12 @@ function fill_in_the_blank( $response ) {
 	$location = rand( 0, count( $verse_words ) - 1 - $number_of_words );
 	$answer = array_slice( $verse_words, $location, $number_of_words );
 
-	for ( $i = 0; $i < $number_of_words; $i++ ) {
-		$verse_words[ $i + $location ] = " BLANK ";
+	$verse_words[ $location ] = "BLANK";
+	for ( $i = 1; $i < $number_of_words; $i++ ) {
+		$verse_words[ $i + $location ] = "";
 	}
+
+	$verse_words = array_filter( $verse_words );
 
 	if ( $location === 0 ) {
 		$prefix = "";
@@ -549,7 +552,9 @@ function fill_in_the_blank_options( $book, $prefix, $number_of_words, $number_of
 
 	$possible_answers = array_unique( $possible_answers );
 
-	while ( count( $possible_answers ) < $number_of_answers ) {
+	$tries = 0;
+
+	while ( $tries < 20 && count( $possible_answers ) < $number_of_answers ) {
 		$random_chapter = $book->chapters[ rand( 0, count( $book->chapters ) - 1 ) ];
 		$random_verse = $random_chapter[ rand( 0, count( $random_chapter ) - 1 ) ];
 		$random_verse_words = preg_split( "/\s/", $random_verse );
@@ -558,10 +563,12 @@ function fill_in_the_blank_options( $book, $prefix, $number_of_words, $number_of
 		$random_possible_answer = join( " ", array_slice( $random_verse_words, $random_starting_point, $number_of_words ) );
 
 		if ( $random_possible_answer != $actual_answer ) {
-			$possible_answers[] = $possible_answer;
+			$possible_answers[] = $random_possible_answer;
 		}
 
 		$possible_answers = array_unique( $possible_answers );
+
+		$tries++;
 	}
 
 	shuffle( $possible_answers );
