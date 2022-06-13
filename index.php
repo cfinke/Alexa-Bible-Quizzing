@@ -20,20 +20,28 @@ try {
 	$user_id = $request->data['session']['user']['userId'];
 	$state = get_state( $user_id );
 
-	if ( 'LaunchRequest' === $request->data['request']['type'] ) {
-		// Just opening the skill ("Open Bible Quizzing").
-		$response = handleIntent( $request, $response, 'Launch' );
-	}
-	else {
-		if ( strpos( $request->intentName, "AMAZON." ) !== 0 ) {
-			// Remove $state->intent_on_yes and $state->vars_on_yes on the first non-Yes/No request after they're set.
-			unset(
-				$state->intent_on_yes,
-				$state->vars_on_yes
-			);
-		}
+	switch ( $request->data['request']['type'] ) {
+		case 'LaunchRequest':
+			// Just opening the skill ("Open Bible Quizzing").
+			$response = handleIntent( $request, $response, 'Launch' );
+		break;
+		case 'SessionEndedRequest':
+			// Nothing to do.
+		break;
+		case 'IntentRequest':
+			if ( strpos( $request->intentName, "AMAZON." ) !== 0 ) {
+				// Remove $state->intent_on_yes and $state->vars_on_yes on the first non-Yes/No request after they're set.
+				unset(
+					$state->intent_on_yes,
+					$state->vars_on_yes
+				);
+			}
 
-		$response = handleIntent( $request, $response );
+			$response = handleIntent( $request, $response );
+			break;
+		case 'CanFulfillIntentRequest':
+			// @todo
+		break;
 	}
 
 	if ( $response->shouldEndSession ) {
