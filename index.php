@@ -118,6 +118,13 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			// slots: Book
 			$book = $request->getSlot( 'Book' );
+
+			if ( ! get_book_object( $book ) ) {
+				$response->addOutput( "I'm sorry, I haven't finished reading that book yet." );
+				$response->shouldEndEssion = true;
+				return $response;
+			}
+
 			$state->book = $book;
 
 			unset( $state->chapter );
@@ -134,6 +141,13 @@ function handleIntent( $request, $response, $intent = null ) {
 			// slots: Book, Chapter
 			// slots: Book
 			$book = $request->getSlot( 'Book' );
+
+			if ( ! get_book_object( $book ) ) {
+				$response->addOutput( "I'm sorry, I haven't finished reading that book yet." );
+				$response->shouldEndEssion = true;
+				return $response;
+			}
+
 			$state->book = $book;
 
 			$chapter = $request->getSlot( 'Chapter' );
@@ -149,6 +163,12 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			// slots: Book, Chapter
 			if ( $request->getSlot( 'Book' ) ) {
+				if ( ! get_book_object( $request->getSlot( 'Book' ) ) ) {
+					$response->addOutput( "I'm sorry, I haven't finished reading that book yet." );
+					$response->shouldEndEssion = true;
+					return $response;
+				}
+
 				$state->book = $request->getSlot( 'Book' );
 
 				if ( ! $request->getSlot( 'Chapter' ) ) {
@@ -323,7 +343,13 @@ exit;
 function read_to_me( $response ) {
 	global $state;
 
-	$book = json_decode( file_get_contents( "data/" . $state->book . ".json" ) );
+	$book = get_book_object( $state->book );
+
+	if ( ! $book ) {
+		$response->addOutput( "I'm sorry, I haven't finished reading that book yet." );
+		$response->shouldEndEssion = true;
+		return $response;
+	}
 
 	if ( ! isset( $state->chapter ) ) {
 		$state->chapter = 1;
@@ -365,7 +391,13 @@ function read_to_me( $response ) {
 function in_which( $response ) {
 	global $state;
 
-	$book = json_decode( file_get_contents( "data/" . $state->book . ".json" ) );
+	$book = get_book_object( $state->book );
+
+	if ( ! $book ) {
+		$response->addOutput( "I'm sorry, I haven't finished reading that book yet." );
+		$response->shouldEndEssion = true;
+		return $response;
+	}
 
 	// Ensure that we don't ask the same verse twice within five responses.
 	if ( ! isset( $state->last_five_verses ) ) {
@@ -412,7 +444,13 @@ function in_which( $response ) {
 function fill_in_the_blank( $response ) {
 	global $state;
 
-	$book = json_decode( file_get_contents( "data/" . $state->book . ".json" ) );
+	$book = get_book_object( $state->book );
+
+	if ( ! $book ) {
+		$response->addOutput( "I'm sorry, I haven't finished reading that book yet." );
+		$response->shouldEndEssion = true;
+		return $response;
+	}
 
 	// Ensure that we don't ask the same verse twice within five responses.
 	if ( ! isset( $state->last_five_verses ) ) {
@@ -576,4 +614,19 @@ function stats( $response, $force = false ) {
 	}
 
 	return $response;
+}
+
+function get_book_object( $book_name ) {
+	$book_name = preg_replace( '/\s+/', '-', $book_name );
+	$book_name = preg_replace( '/[^a-z0-9-]/', '', $book_name );
+
+	$file_path = "data/" . $book_name . ".json";
+
+	if ( ! file_exists( $file_path ) ) {
+		return false;
+	}
+
+	$book = json_decode( file_get_contents( $file_path ) );
+
+	return $book;
 }
