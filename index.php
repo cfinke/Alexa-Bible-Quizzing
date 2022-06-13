@@ -624,8 +624,7 @@ function stats( $response, $force = false ) {
 }
 
 function get_book_object( $book_name ) {
-	$book_name = preg_replace( '/\s+/', '-', $book_name );
-	$book_name = preg_replace( '/[^a-z0-9-]/', '', $book_name );
+	$book_name = book_name_to_book_file_name( $book_name );
 
 	$file_path = "data/" . $book_name . ".json";
 
@@ -636,4 +635,20 @@ function get_book_object( $book_name ) {
 	$book = json_decode( file_get_contents( $file_path ) );
 
 	return $book;
+}
+
+function book_name_to_book_file_name( $book_name ) {
+	$book_name = trim( $book_name );
+	$book_name = strtolower( $book_name );
+	$book_name = preg_replace( '/^(first|1st|one) /', '1 ', $book_name );
+	$book_name = preg_replace( '/^(second|2nd|two) /', '2 ', $book_name );
+	$book_name = preg_replace( '/^(third|3rd|three) /', '3 ', $book_name );
+
+	$book_name = str_replace( 'song of songs', 'song of solomon', $book_name  );
+	$book_name = str_replace( 'revelations', 'revelation', $book_name  );
+
+	$book_name = preg_replace( '/\s+/', '-', $book_name );
+	$book_name = preg_replace( '/[^a-z0-9-]/', '', $book_name );
+
+	return $book_name;
 }
