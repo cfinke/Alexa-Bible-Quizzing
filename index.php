@@ -199,6 +199,7 @@ function handleIntent( $request, $response, $intent = null ) {
 			$response = fill_in_the_blank( $response );
 
 			$state->intent_on_continue = 'FillInTheBlank';
+			$state->expected_response = 'single_letter';
 		break;
 		case 'SingleNumberResponse':
 			$response->shouldEndSession = false;
@@ -222,6 +223,9 @@ function handleIntent( $request, $response, $intent = null ) {
 					break;
 					case 'chapter_and_verse':
 						$response->addOutput( "I need the chapter AND verse." );
+					break;
+					case 'single_letter':
+						$response->addOutput( "The choices were A, B, C, or D." );
 					break;
 				}
 			}
@@ -270,7 +274,10 @@ function handleIntent( $request, $response, $intent = null ) {
 						}
 
 						return handleIntent( $request, $response, $state->intent_on_continue );
-						break;
+					break;
+					case 'single_letter':
+						$response->addOutput( "The choices were A, B, C, or D." );
+					break;
 				}
 			}
 			else {
