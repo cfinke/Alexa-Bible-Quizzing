@@ -20,7 +20,7 @@ try {
 
 	switch ( $request->data['request']['type'] ) {
 		case 'LaunchRequest':
-			// Just opening the skill ("Open Bible Quizzing").
+			// Just opening the skill ("Open Scripture Quiz").
 			$response = handleIntent( $request, $response, 'Launch' );
 		break;
 		case 'SessionEndedRequest':
@@ -99,8 +99,8 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			$response->addOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
 
-			$response->addCardTitle( "Using Bible Quizzing" );
-			$response->addCardOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
+			$response->addCardTitle( "Using Scripture Quiz" );
+			$response->addCardOutput( "Scripture Quiz helps you memorize books of the Bible. Just say, 'Quiz Me on the book of Acts,' or 'I want to learn Romans Chapter 2.'" );
 		break;
 		case 'Stats':
 			$response = stats( $response, true );

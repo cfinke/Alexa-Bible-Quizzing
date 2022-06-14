@@ -1,19 +1,19 @@
-Bible Quizzing
+Scripture Quiz
 ==============
-This is an Alexa skill designed to help you memorize books of the Bible, specifically for kids in Bible quizzing competitions.
+This is an Alexa skill designed to help you memorize books of the Bible, specifically for kids in Scripture Quiz competitions.
 
-Say, "Alexa, open Bible Quizzing" or "Alexa, tell Bible Quizzing to quiz me on the book of Acts."
+Say, "Alexa, open Scripture Quiz" or "Alexa, tell Scripture Quiz to quiz me on the book of Acts."
 
 Example Phrases
 ===============
 
-"Alexa, open Bible Quizzing."
+"Alexa, open Scripture Quiz."
 
-"Alexa, tell Bible Quizzing to quiz me on the book of Acts."
+"Alexa, tell Scripture Quiz to quiz me on the book of Acts."
 
-"Alexa, tell Bible Quizzing to quiz me on Acts Chapter 4."
+"Alexa, tell Scripture Quiz to quiz me on Acts Chapter 4."
 
-"Alexa, tell Bible Quizzing to read me Acts Chapter 7."
+"Alexa, tell Scripture Quiz to read me Acts Chapter 7."
 
 Attribution
 ===========
