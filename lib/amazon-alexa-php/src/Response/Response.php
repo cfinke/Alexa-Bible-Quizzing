@@ -12,6 +12,7 @@ class Response {
 	public $shouldEndSession = false;
 
 	public $output = array();
+	public $reprompt_output = array();
 
 	public $cardTitle = '';
 	public $cardOutput = array();
@@ -57,13 +58,18 @@ class Response {
 	}
 
 	/**
-	 * Set up reprompt with given text
+	 * Add text to the reprompt.
+	 *
 	 * @param string $text
+	 * @param bool $reset If true, erase previous reprompt text.
 	 * @return \Alexa\Response\Response
 	 */
-	public function reprompt($text) {
-		$this->reprompt = new Reprompt;
-		$this->reprompt->outputSpeech->text = $text;
+	public function reprompt( $text, $reset = false ) {
+		if ( $reset ) {
+			$this->reprompt_output = array();
+		}
+
+		$this->reprompt_output[] = $text;
 
 		return $this;
 	}
@@ -121,7 +127,14 @@ class Response {
 	 */
 	public function render() {
 		$this->outputSpeech = new OutputSpeech;
-		$this->outputSpeech->text = join( "\n\n", $this->output );
+		$this->outputSpeech->type = 'SSML';
+		$this->outputSpeech->ssml = '<speak>' . join( "\n\n", $this->output ) . '</speak>';
+
+		if ( ! empty( $this->reprompt_output ) ) {
+			$this->reprompt = new Reprompt;
+			$this->reprompt->outputSpeech->type = 'SSML';
+			$this->reprompt->outputSpeech->ssml = '<speak>' . join( "\n\n", $this->reprompt_output ) . '</speak>';
+		}
 
 		if ( $this->cardTitle || ! empty( $this->cardOutput ) ) {
 			$this->card = new Card;

@@ -97,7 +97,7 @@ function handleIntent( $request, $response, $intent = null ) {
 		case 'AMAZON.HelpIntent':
 			$response->shouldEndSession = false;
 
-			$response->addOutput( "Bible Quizzing helps you learn books of the Bible. Just say 'Quiz Me on the book of Acts' or 'I want to learn Acts Chapter 2.'" );
+			$response->addOutput( "Scripture Quiz helps you memorize books of the Bible. Just say, '<prosody rate=\"slow\">Quiz Me on the book of Acts</prosody>,' or, '<prosody rate=\"slow\">I want to learn Romans, Chapter 2</prosody>.'" );
 
 			$response->addCardTitle( "Using Scripture Quiz" );
 			$response->addCardOutput( "Scripture Quiz helps you memorize books of the Bible. Just say, 'Quiz Me on the book of Acts,' or 'I want to learn Romans Chapter 2.'" );
@@ -125,13 +125,15 @@ function handleIntent( $request, $response, $intent = null ) {
 
 			$state->book = $book;
 
+			$book_object = get_book_object( $book );
+
 			unset( $state->chapter );
 			unset( $state->last_five_verses );
 
-			$response->addOutput( "How do you want to learn? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
+			$response->addOutput( "How do you want to learn " . $book . "? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
 
 			$response->addCardTitle( "Choose a Mode" );
-			$response->addCardOutput( "How do you want to learn? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
+			$response->addCardOutput( "How do you want to learn " . $book . "? You can say 'Fill in the blank', 'In which verse', or 'Read to me.'" );
 		break;
 		case 'ChooseBookAndChapter':
 			$response->shouldEndSession = false;
@@ -480,7 +482,7 @@ function fill_in_the_blank( $response ) {
 	array_unshift( $state->last_five_verses, $chosen_chapter . ":" . $chosen_verse );
 	$state->last_five_verses = array_slice( $state->last_five_verses, 0, 5 );
 
-	$response->addOutput( "Fill in the blank in chapter " . $chosen_chapter . " verse " . $chosen_verse . ": " );
+	$response->addOutput( "Fill in the blank in chapter " . $chosen_chapter . ", verse " . $chosen_verse . ": " );
 
 	$verse_text = $chapter[ $chosen_verse - 1 ];
 	$verse_words = preg_split( "/\s/", $verse_text );
@@ -510,7 +512,7 @@ function fill_in_the_blank( $response ) {
 
 	$verse_with_blank = join( " ", $verse_words );
 
-	$response->addOutput( $verse_with_blank );
+	$response->addOutput( '<prosody rate="slow">' . str_replace( 'BLANK', '<break strength="strong"/> <prosody rate="medium" pitch="low">BLANK</prosody> <break strength="strong"/>', $verse_with_blank ) . '</prosody>' );
 	$state->letter = "A";
 
 	$response->addOutput( "Is it..." );
